@@ -6,6 +6,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- PRE-LOADER ---
     const preloader = document.getElementById('preloader');
     
+    // NOTA: Se eliminó el listener 'window.load' para arreglar el bug de carga.
+    // El preloader se ocultará al final de este script.
+
     // --- EFECTOS DE SONIDO ---
     const clickSound = new Audio('https://www.fesliyanstudios.com/play-mp3/387');
     const swooshSound = new Audio('https://www.fesliyanstudios.com/play-mp3/570');
@@ -25,7 +28,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // --- LÓGICA DE VOZ/SALUDO ---
+    // --- LÓGICA DE VOZ/SALUDO (NUEVO) ---
+    // IMPORTANTE: El archivo de audio debe llamarse 'intro_voice.mp3' y estar en la misma carpeta.
     const introVoice = new Audio('intro_voice.mp3'); 
     const playQuoteBtn = document.getElementById('play-quote-btn');
     const originalQuoteBtnText = playQuoteBtn.innerHTML;
