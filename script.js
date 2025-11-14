@@ -6,11 +6,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- PRE-LOADER ---
     const preloader = document.getElementById('preloader');
     
-    // <-- CAMBIO 1: ELIMINA ESTAS 3 LÍNEAS -->
-    // window.addEventListener('load', () => {
-    //     preloader.classList.add('loaded');
-    // });
-    // <-- FIN DEL CAMBIO 1 -->
+    // NOTA: Se eliminó el listener 'window.load' para arreglar el bug de carga.
+    // El preloader se ocultará al final de este script.
 
     // --- EFECTOS DE SONIDO ---
     const clickSound = new Audio('https://www.fesliyanstudios.com/play-mp3/387');
@@ -22,11 +19,50 @@ document.addEventListener('DOMContentLoaded', function() {
                 swooshSound.currentTime = 0;
                 swooshSound.play().catch(e => console.log("Error al reproducir swoosh:", e));
             } else {
-                clickSound.currentTime = 0;
-                clickSound.play().catch(e => console.log("Error al reproducir click:", e));
+                // Evitamos que el botón de Play/Pause de la música o el de Quote hagan doble clic
+                if (element.id !== 'play-pause-btn' && element.id !== 'play-quote-btn') {
+                    clickSound.currentTime = 0;
+                    clickSound.play().catch(e => console.log("Error al reproducir click:", e));
+                }
             }
         });
     });
+    
+    // --- LÓGICA DE VOZ/SALUDO (NUEVO) ---
+    const introVoice = new Audio('intro_voice.mp3'); 
+    const playQuoteBtn = document.getElementById('play-quote-btn');
+    const originalQuoteBtnText = playQuoteBtn.innerHTML;
+
+    if (playQuoteBtn) {
+        playQuoteBtn.addEventListener('click', () => {
+            if (introVoice.paused) {
+                // Pausamos la música si está sonando
+                if (!audio.paused) {
+                    audio.pause();
+                    document.getElementById('play-pause-btn').innerHTML = '<i class="fas fa-play"></i>';
+                    document.querySelector('.spotify-icon').classList.remove('is-spinning');
+                }
+                
+                introVoice.play().catch(e => console.error("Error al reproducir la voz:", e));
+                playQuoteBtn.innerHTML = '<i class="fas fa-pause"></i> Detener voz';
+                
+                // Evento para resetear el botón cuando el audio termine
+                introVoice.addEventListener('ended', () => {
+                    playQuoteBtn.innerHTML = originalQuoteBtnText;
+                }, { once: true });
+                
+                // Agregamos sonido de click que se eliminó en el if de arriba
+                clickSound.currentTime = 0;
+                clickSound.play().catch(e => console.log("Error al reproducir click:", e));
+
+            } else {
+                introVoice.pause();
+                introVoice.currentTime = 0; // Regresa al inicio
+                playQuoteBtn.innerHTML = originalQuoteBtnText;
+            }
+        });
+    }
+    // --- FIN LÓGICA DE VOZ/SALUDO ---
 
     // --- ANIMACIÓN DE TEXTO "MÁQUINA DE ESCRIBIR" ---
     document.querySelectorAll('.typewriter').forEach((element, index) => {
@@ -75,7 +111,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function animateStats(){document.querySelectorAll('.overlay-pane.active .fill').forEach(bar=>{bar.style.width='0%';const percentage=bar.getAttribute('data-p');setTimeout(()=>{bar.style.width=percentage+'%'},100)})}
     
 
-    // --- LÓGICA DEL REPRODUCTOR DE MÚSICA Y LETRAS (COMPLETAMENTE NUEVO) ---
+    // --- LÓGICA DEL REPRODUCTOR DE MÚSICA Y LETRAS ---
 
     // =================================================================
     // === ¡EDITA ESTA SECCIÓN CON TUS CANCIONES Y LETRAS! ===
@@ -126,12 +162,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 { time: 200, line: "Tropezando con mis fantasías" },
                 { time: 202, line: "Escuchando sucias nanas en repetición" },
                 { time: 206, line: "Bien podría pudrirme en la guardería y contar ovejas" }
-                // ... Sigue añadiendo líneas ...
             ]
         },
         {
-            title: "Heathens", // <-- CAMBIA ESTO
-            artist: "Twenty One Pilots", // <-- CAMBIA ESTO
+            title: "Heathens",
+            artist: "Twenty One Pilots",
             src: "song2.mp3",
             lyrics: [
                 // 'time' es el segundo exacto en que quieres que aparezca la línea
@@ -176,7 +211,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 { time: 177, line: "Traté de advertirte que te alejaras" },
                 { time: 182, line: "Y ahora están afuera, listos para entrar" },
                 { time: 188, line: "Parece que podrías ser... uno de nosotros" }
-                // ... Sigue añadiendo líneas ...
             ]
         }
     ];
@@ -237,9 +271,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Botón de Play/Pausa
     playPauseBtn.addEventListener('click', () => {
+        // Pausamos la voz si está sonando
+        if (!introVoice.paused) {
+            introVoice.pause();
+            introVoice.currentTime = 0;
+            playQuoteBtn.innerHTML = originalQuoteBtnText;
+        }
+        
         if (audio.paused) {
-            // Esta es la parte importante. El primer play() debe ser
-            // directo de un clic del usuario.
             audio.play().catch(e => console.error("Error al intentar reproducir:", e));
             playPauseBtn.innerHTML = pauseIcon;
             spotifyIcon.classList.add('is-spinning');
@@ -257,7 +296,7 @@ document.addEventListener('DOMContentLoaded', function() {
             currentSongIndex = songs.length - 1; // Vuelve al final
         }
         loadSong(currentSongIndex);
-        audio.play().catch(e => console.error("Error al intentar reproducir:", e)); // Reproduce automáticamente la nueva canción
+        audio.play().catch(e => console.error("Error al intentar reproducir:", e));
         playPauseBtn.innerHTML = pauseIcon;
         spotifyIcon.classList.add('is-spinning');
     });
@@ -269,7 +308,7 @@ document.addEventListener('DOMContentLoaded', function() {
             currentSongIndex = 0; // Vuelve al inicio
         }
         loadSong(currentSongIndex);
-        audio.play().catch(e => console.error("Error al intentar reproducir:", e)); // Reproduce automáticamente la nueva canción
+        audio.play().catch(e => console.error("Error al intentar reproducir:", e));
         playPauseBtn.innerHTML = pauseIcon;
         spotifyIcon.classList.add('is-spinning');
     });
@@ -314,8 +353,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 activeLine.classList.add('active');
 
                 // === Lógica de "scroll" ===
-                // Altura de la caja de letras (100px) / 2 = 50px (para centrar)
-                // Posición de la línea activa - 50px + la mitad de su propia altura
                 const scrollOffset = activeLine.offsetTop - (100 / 2) + (activeLine.clientHeight / 2);
                 
                 // Usamos transform: translateY para un scroll suave (definido en el CSS)
@@ -351,8 +388,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // <-- CAMBIO 2: AÑADE ESTA LÍNEA AL FINAL -->
-    // Esto oculta el preloader ahora que todo el script está listo.
+    // === SOLUCIÓN PRELOADER (AÑADIDO AL FINAL) ===
+    // Esto oculta el preloader AHORA que todo el script ha terminado, 
+    // sin esperar a que todos los archivos externos carguen.
     preloader.classList.add('loaded');
 
 }); // <-- Este es el final del 'DOMContentLoaded'
